@@ -15,7 +15,7 @@ jobs:
         run: |
           # Runner temp paths may use Windows short names or redirected ancestors.
           # Keep application path protections intact; normalize only the test root.
-          $testTemp = node -p "require('node:fs').realpathSync(require('node:os').tmpdir())"
+          $testTemp = node -e "const fs = require('node:fs'); const tmp = require('node:os').tmpdir(); fs.promises.realpath(tmp).then(real => { console.error(JSON.stringify({ temporaryDirectory: tmp, syncRealPath: fs.realpathSync(tmp), asyncRealPath: real })); console.log(real); }).catch(error => { console.error(error); process.exit(1); });"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $env:TEMP = $testTemp
           $env:TMP = $testTemp
