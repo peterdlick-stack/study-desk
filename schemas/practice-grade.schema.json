@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Practice grading report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["verdict", "summary", "recognizedWork", "steps", "errorTopicIds", "uncertainties", "hint", "solution", "verification"],
+  "properties": {
+    "verdict": { "type": "string", "enum": ["correct", "wrong", "unanswered", "needs-review", "source-issue"] },
+    "summary": { "type": "string", "maxLength": 8000 },
+    "recognizedWork": { "type": "string", "maxLength": 60000 },
+    "steps": {
+      "type": "array", "maxItems": 200,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["page", "status", "comment", "topicIds", "x", "y"],
+        "properties": {
+          "page": { "type": "integer", "minimum": 1, "maximum": 32 },
+          "status": { "type": "string", "enum": ["correct", "wrong", "unclear"] },
+          "comment": { "type": "string", "maxLength": 8000 },
+          "topicIds": { "type": "array", "maxItems": 30, "items": { "type": "string" } },
+          "x": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+          "y": { "type": ["number", "null"], "minimum": 0, "maximum": 1 }
+        }
+      }
+    },
+    "errorTopicIds": { "type": "array", "maxItems": 30, "items": { "type": "string" } },
+    "uncertainties": { "type": "array", "maxItems": 100, "items": { "type": "string", "maxLength": 8000 } },
+    "hint": { "type": "string", "maxLength": 12000 },
+    "solution": { "type": "string", "maxLength": 60000 },
+    "verification": {
+      "type": "object", "additionalProperties": false, "required": ["status", "reason"],
+      "properties": {
+        "status": { "type": "string", "enum": ["verified", "needs-review"] },
+        "reason": { "type": "string", "maxLength": 8000 }
+      }
+    }
+  }
+}

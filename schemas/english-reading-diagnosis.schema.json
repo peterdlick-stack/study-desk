@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "FREE reading diagnosis",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["summary", "genre", "questionType", "languageBarrier", "expectedAction", "articleEvidence", "chosenAnswerProblem", "correctAnswerReason", "causeCode", "causeLabel", "certainty", "reason", "probe", "nextAction", "sourceIds"],
+  "properties": {
+    "summary": { "type": "string", "maxLength": 3000 },
+    "genre": { "type": "string", "enum": ["application", "narrative", "expository", "argumentative", "seven-choice", "unknown"] },
+    "questionType": { "type": "string", "enum": ["detail", "main-idea", "completion", "unknown"] },
+    "languageBarrier": { "type": "string", "enum": ["present", "absent", "uncertain"] },
+    "expectedAction": { "type": "string", "maxLength": 5000 },
+    "articleEvidence": { "type": "string", "maxLength": 8000 },
+    "chosenAnswerProblem": { "type": "string", "maxLength": 5000 },
+    "correctAnswerReason": { "type": "string", "maxLength": 5000 },
+    "causeCode": { "type": "string", "enum": ["LEX_UNKNOWN", "SYNTAX_PARSE", "LITERAL_COMPREHENSION", "GENRE_MISCLASSIFIED", "SUBTYPE_MISCLASSIFIED", "QUESTION_TYPE_MISCLASSIFIED", "THEME_NOT_ESTABLISHED", "DETAIL_LOCATION_MISSED", "SEARCH_TARGET_UNCLEAR", "PARAPHRASE_MISSED", "IRRELEVANT_DETAIL", "OVERSTATEMENT", "ATTITUDE_REVERSED", "EXAMPLE_AS_CLAIM", "PRONOUN_ANTECEDENT_MISMATCH", "LOGIC_RELATION_MISMATCH", "SENTENCE_ROLE_MISMATCH", "DISTRACTOR_UNEXPLAINED", "INSUFFICIENT_EVIDENCE", "NO_ERROR"] },
+    "causeLabel": { "type": "string", "maxLength": 500 },
+    "certainty": { "type": "string", "enum": ["low", "medium", "high"] },
+    "reason": { "type": "string", "maxLength": 8000 },
+    "probe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["question", "choices"],
+      "properties": {
+        "question": { "type": "string", "maxLength": 2000 },
+        "choices": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 4,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "label"],
+            "properties": {
+              "id": { "type": "string", "pattern": "^[a-zA-Z0-9_-]{1,40}$" },
+              "label": { "type": "string", "maxLength": 500 }
+            }
+          }
+        }
+      }
+    },
+    "nextAction": { "type": "string", "maxLength": 5000 },
+    "sourceIds": { "type": "array", "maxItems": 12, "items": { "type": "string", "pattern": "^[a-zA-Z0-9_-]{1,80}$" } }
+  }
+}

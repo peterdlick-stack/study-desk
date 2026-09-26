@@ -1,0 +1,56 @@
+<!doctype html>
+<html class="player-page" lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <script src="js/appearance.js"></script>
+    <title>课程播放器</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="vendor/katex/katex.min.css" />
+    <script defer src="vendor/katex/katex.min.js"></script>
+    <script defer src="vendor/katex/auto-render.min.js"></script>
+  </head>
+  <body class="player-body">
+    <section id="question-screen" hidden aria-label="副屏题面">
+      <header class="question-toolbar">
+        <div><strong id="question-group">题型训练</strong><span id="question-position"></span></div>
+        <nav aria-label="题面显示控制"><button id="question-zoom-out" type="button" aria-label="缩小题面">−</button><output id="question-zoom-value">100%</output><button id="question-zoom-in" type="button" aria-label="放大题面">+</button><button id="question-fit" type="button">适合宽度</button><button id="question-fullscreen" type="button" aria-pressed="false">全屏</button></nav>
+      </header>
+      <p id="question-connection" role="status"></p>
+      <div id="question-scroll"><article id="question-paper"></article></div>
+      <footer class="question-navigation"><span id="question-navigation-hint">→ / Enter 开始做题 · 切题不自动提交</span><button id="question-next" type="button">开始做题 →</button></footer>
+    </section>
+    <header class="player-header">
+      <div>
+        <strong id="player-course-title">课程播放器</strong>
+        <span id="player-theme">当前主题: 未归类</span>
+      </div>
+      <button class="quiet-button" data-color-mode-toggle type="button" aria-label="切换深浅外观">外观：深色</button>
+        <span id="player-status" aria-live="polite">等待主屏选择视频</span>
+    </header>
+    <main class="player-shell">
+      <video id="course-video" playsinline></video>
+      <div id="player-caption-overlay" class="player-caption-overlay" aria-live="off" hidden></div>
+      <div class="player-empty" id="player-empty">
+        <strong>播放器已连接</strong>
+        <span>请在主屏学习台选择本地视频。</span>
+      </div>
+    </main>
+    <footer class="player-controls" aria-label="播放器控制">
+      <button id="player-toggle" type="button">播放</button>
+      <span class="player-time" id="player-time">00:00 / 00:00</span>
+      <input id="player-seek" type="range" min="0" max="0" value="0" step="0.05" aria-label="播放进度" />
+      <select id="player-rate" aria-label="播放速度">
+        <option value="0.75">0.75x</option>
+        <option value="1" selected>1.0x</option>
+        <option value="1.25">1.25x</option>
+        <option value="1.5">1.5x</option>
+        <option value="2">2.0x</option>
+      </select>
+      <button id="player-captions" type="button" aria-pressed="false" hidden>字幕：关</button>
+      <button id="player-fullscreen" type="button" aria-label="进入全屏" aria-pressed="false" title="进入全屏 (F)">全屏</button>
+    </footer>
+    <script type="module" src="js/player.js"></script>
+  </body>
+</html>

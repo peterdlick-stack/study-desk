@@ -1,0 +1,15 @@
+{
+  "name": "study-desk",
+  "version": "0.1.0",
+  "description": "本地学习台：阅读、笔记、手写练习、资料检索与可追溯的 AI 辅助诊断。",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/start-demo.mjs",
+    "start:local": "node server.mjs",
+    "test": "node --test",
+    "test:release": "node --test tests/public-demo.test.mjs",
+    "check:public": "node scripts/check-public.mjs"
+  },
+  "engines": { "node": ">=22" }
+}

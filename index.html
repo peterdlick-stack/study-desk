@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <script src="js/appearance.js"></script>
+    <title>学习台</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="vendor/katex/katex.min.css" />
+    <script defer src="vendor/katex/katex.min.js"></script>
+    <script defer src="vendor/katex/auto-render.min.js"></script>
+  </head>
+  <body class="main-body" hidden>
+    <template id="subject-home-template">
+      <header class="subject-home-header"><strong>学习台</strong><button class="quiet-button" data-home-appearance type="button">切换外观</button></header>
+      <main class="subject-home-main">
+        <p class="subject-eyebrow">STUDY DESK</p>
+        <h1>今天，从哪一科开始？</h1>
+        <p class="subject-intro">选择科目，进入对应的学习空间。</p>
+        <nav class="subject-choices" aria-label="选择学习科目">
+          <a class="subject-choice" href="./?subject=math"><span class="subject-number">01</span><div><h2>数学</h2><p>题型训练 · 讲义与方法 · 手写练习</p></div><span class="subject-enter">进入数学 →</span></a>
+          <a class="subject-choice" href="./?subject=physics"><span class="subject-number">02</span><div><h2>物理</h2><p>课程视频 · 复习笔记 · 配套作业</p></div><span class="subject-enter">进入物理 →</span></a>
+          <a class="subject-choice" href="./?subject=english"><span class="subject-number">03</span><div><h2>英语</h2><p>FREE 大学英语 · 长文本阅读 · 卡点与回读</p></div><span class="subject-enter">进入英语 →</span></a>
+        </nav>
+      </main>
+    </template>
+    <header class="app-header">
+      <div class="course-identity">
+        <nav class="subject-navigation" aria-label="科目导航"><a id="back-to-subjects" href="./">← 返回入口</a><strong id="subject-name"></strong></nav>
+        <div class="course-copy">
+          <strong id="course-title">普通物理演示课</strong>
+          <span id="course-meta">尚未选择视频</span>
+        </div>
+        <label class="file-button" for="video-input">选择视频</label>
+        <input id="video-input" type="file" accept="video/*,audio/*" hidden />
+        <label class="file-button secondary" for="transcript-input">导入逐字稿 / 学习包</label>
+        <input id="transcript-input" type="file" accept=".srt,.json,text/plain,application/json" hidden />
+      </div>
+
+      <div class="session-center">
+        <span class="time-display" id="header-time">00:00 / 00:00</span>
+        <span class="theme-label">当前主题</span>
+        <button class="theme-current" id="current-theme" type="button">未归类</button>
+      </div>
+
+      <div class="header-actions">
+        <button class="quiet-button" data-color-mode-toggle type="button" aria-label="切换深浅外观">外观：深色</button>
+        <span id="save-status" role="status">正在连接课程库</span>
+        <button class="quiet-button" id="open-library" type="button">课程与知识库</button>
+        <button class="quiet-button" id="focus-mode" type="button">书写专注</button>
+        <button class="primary-button" id="open-player" type="button">打开副屏播放器</button>
+        <a class="file-button secondary" id="player-tab-link" target="_blank" rel="noopener">在新标签页打开</a>
+      </div>
+    </header>
+
+    <section class="suggestion-bar" id="suggestion-bar" hidden>
+      <span>AI主题建议</span>
+      <strong id="suggestion-title"></strong>
+      <button type="button" data-suggestion-action="confirm">确认</button>
+      <button type="button" data-suggestion-action="merge">并入当前主题</button>
+      <button type="button" data-suggestion-action="ignore">忽略</button>
+    </section>
+
+    <section class="source-integrity" id="source-integrity" data-source-status="none" hidden aria-live="polite">
+      <strong>学习包来源</strong>
+      <span id="source-expected"></span>
+      <span id="source-warning"></span>
+    </section>
+
+    <main class="workspace" id="workspace">
+      <aside class="panel notes-panel" id="notes-panel">
+        <nav class="workspace-tabs" aria-label="学习工作区">
+          <button id="show-course-workspace" type="button" aria-pressed="true">课程笔记</button>
+          <button id="show-practice-workspace" type="button" aria-pressed="false">作业与错题</button>
+          <button id="show-training-workspace" type="button" aria-pressed="false">题型训练</button>
+        </nav>
+        <div id="course-notes">
+        <header class="panel-header">
+          <div>
+            <h1 id="learning-content-title">线性笔记</h1>
+            <p id="learning-content-description">由逐字稿按讲课顺序生成</p>
+          </div>
+          <div class="notes-controls">
+            <div class="content-tabs" role="tablist" aria-label="课程文本视图">
+              <button id="show-notes" type="button" role="tab" aria-selected="true">线性笔记</button>
+              <button id="show-cues" type="button" role="tab" aria-selected="false">逐句转译</button>
+            </div>
+            <label class="switch-label">
+              <input id="follow-notes" type="checkbox" checked />
+              跟随播放
+            </label>
+          </div>
+        </header>
+        <div class="panel-state" id="notes-state">演示内容，导入SRT后替换</div>
+        <div class="notes-list" id="notes-list" aria-label="本堂课线性笔记"></div>
+        </div>
+        <section id="practice-left" hidden aria-label="本节作业"></section>
+      </aside>
+
+      <div class="column-resizer" id="left-resizer" role="separator" aria-label="调整线性笔记宽度"></div>
+
+      <section class="panel canvas-panel">
+        <header class="canvas-toolbar">
+          <div class="tool-group" role="toolbar" aria-label="画布工具">
+            <button type="button" class="tool active" data-tool="select">选择</button>
+            <button type="button" class="tool" data-tool="pen">笔</button>
+            <button type="button" class="tool" data-tool="eraser">橡皮擦</button>
+            <button type="button" class="tool geometry-tool" data-tool="line">直线</button>
+            <button type="button" class="tool geometry-tool" data-tool="arrow">箭头</button>
+            <button type="button" class="tool geometry-tool" data-tool="axes">坐标轴</button>
+            <button type="button" class="tool geometry-tool" data-tool="circle">圆</button>
+            <button type="button" class="tool geometry-tool" data-tool="ellipse">椭圆</button>
+            <button type="button" class="tool geometry-tool" data-tool="curve">曲线</button>
+          </div>
+          <div class="tool-group">
+            <button type="button" class="quiet-button" id="undo-object">撤销</button>
+            <button type="button" class="quiet-button" id="delete-object" disabled>删除所选</button>
+          </div>
+        </header>
+
+        <div class="canvas-context">
+          <span>个人必要记录</span>
+          <span id="canvas-hint">选择对象后可移动，数位笔侧键用于平移</span>
+        </div>
+
+        <div class="canvas-viewport" id="canvas-viewport">
+          <div class="canvas-stage" id="canvas-stage" tabindex="0" aria-label="个人记录自由画布">
+            <svg class="drawing-layer" id="drawing-layer" viewBox="0 0 2400 1600" aria-hidden="true"></svg>
+            <div class="object-layer" id="object-layer"></div>
+            <div class="canvas-empty" id="canvas-empty">
+              <strong>尽量不抄写课程内容</strong>
+              <span>使用 Ctrl+2 保存带时间戳的课程画面，必要时再推导或批注。</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="column-resizer" id="right-resizer" role="separator" aria-label="调整思维导图宽度"></div>
+
+      <aside class="panel map-panel" id="map-panel">
+        <div id="course-map">
+        <header class="panel-header">
+          <div>
+            <h1>思维导图</h1>
+            <p>AI提示，人工确认</p>
+          </div>
+          <button class="quiet-button" id="fit-map" type="button">定位当前</button>
+        </header>
+        <div class="mind-map" id="mind-map" aria-label="本堂课思维导图"></div>
+        <details class="shortcut-reference">
+          <summary>快捷键</summary>
+          <dl>
+            <div><dt>Space</dt><dd>播放 / 暂停</dd></div>
+            <div><dt>Ctrl+1</dt><dd>时间锚点</dd></div>
+            <div><dt>Ctrl+2</dt><dd>截取当前帧</dd></div>
+            <div><dt>Ctrl+3</dt><dd>截图并批注</dd></div>
+            <div><dt>Ctrl+4</dt><dd>开始手写推导</dd></div>
+            <div><dt>Ctrl+G</dt><dd>几何工具</dd></div>
+            <div><dt>Ctrl+Q</dt><dd>记录疑问</dd></div>
+            <div><dt>Ctrl+Enter</dt><dd>确认主题</dd></div>
+          </dl>
+        </details>
+        </div>
+        <section id="practice-right" hidden aria-label="批改与知识点"></section>
+      </aside>
+    </main>
+
+    <div class="toast-region" id="toast-region" aria-live="polite"></div>
+    <script type="module" src="js/entry.js"></script>
+  </body>
+</html>

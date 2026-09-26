@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "notesDirectory": "notes",
+  "source": { "title": "尚未接入个人讲义", "path": "", "sha256": "", "pages": 0 },
+  "chapters": [],
+  "repair": { "id": "repair", "title": "自查笔记（待接入）", "noteFile": "repair.md", "trainingTopicIds": [] },
+  "topics": []
+}

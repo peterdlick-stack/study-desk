@@ -1,0 +1,57 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtemp, mkdir, writeFile, readFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { spawn } from 'node:child_process';
+import { createDefaultState } from '../js/core.js';
+import { makeBackup, newEntry, reviseEntry } from '../js/library.js';
+import { sha } from '../lib/store.mjs';
+
+test('local HTTP workflow: persistence, preview/commit, backup, conflicts and request boundaries', async t => {
+  const dir = await mkdtemp(join(tmpdir(), 'study-desk-http-'));
+  const data = join(dir, 'courses'), vault = join(dir, 'vault');
+  await mkdir(join(vault, '考研', '数据'), { recursive: true });
+  await writeFile(join(vault, '考研', '数据', 'units.csv'), 'unit_id,subject_id,title\nu,math,合成单元\n');
+  const port = 14000 + Math.floor(Math.random() * 10000);
+  const child = spawn(process.execPath, ['server.mjs'], { cwd: new URL('..', import.meta.url), env: { ...process.env, STUDY_DESK_PORT: String(port), STUDY_DESK_DATA: data, STUDY_DESK_VAULT: vault }, windowsHide: true });
+  t.after(() => { child.kill(); });
+  let errors = ''; child.stderr.on('data', chunk => { errors += chunk; });
+  await new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error('Server timeout ' + errors)), 5000);
+    child.stdout.once('data', () => { clearTimeout(timeout); resolve(); });
+    child.once('exit', () => { clearTimeout(timeout); reject(new Error(errors)); });
+  });
+  const url = `http://127.0.0.1:${port}`;
+  const call = async (path, payload, extra = {}) => {
+    const response = await fetch(url + path, { method: payload === undefined ? 'GET' : 'POST', headers: { 'X-Study-Desk': '1', ...(payload === undefined ? {} : { 'Content-Type': 'application/json' }), ...extra }, ...(payload === undefined ? {} : { body: JSON.stringify(payload) }) });
+    return { status: response.status, data: await response.json() };
+  };
+  assert.equal((await fetch(url + '/api/courses')).status, 403);
+  assert.equal((await call('/api/courses', undefined, { Origin: 'https://example.com' })).status, 403);
+  assert.equal((await fetch(url + '/tests/p22-27m-33m.study-bundle.json')).status, 404);
+  assert.equal((await fetch(url + '/lib/vault.mjs')).status, 404);
+  const state = { ...createDefaultState(), lessonId: 'http-course', entries: [] };
+  state.course = { ...state.course, demo: false, title: 'HTTP 合成课程' };
+  const first = await call('/api/courses', { snapshot: state, expectedRevision: null }); assert.equal(first.status, 200);
+  assert.equal((await call('/api/courses', { snapshot: state, expectedRevision: 'stale' })).status, 409);
+  const revisions = await Promise.all([1, 2].map(i => call('/api/courses', { snapshot: { ...state, player: { ...state.player, currentTime: i } }, expectedRevision: first.data.revision })));
+  assert.deepEqual(revisions.map(r => r.status).sort(), [200, 409]);
+  const exported = await call('/api/backup', makeBackup(state)); assert.equal(exported.status, 200);
+  assert.equal(JSON.parse(await readFile(exported.data.path, 'utf8')).snapshot.lessonId, state.lessonId);
+  assert.equal((await call('/api/backup', { format: 'study-desk-backup', version: 1, snapshot: {} })).status, 400);
+  const entry = reviseEntry(newEntry(state, state.notes[0]), { personalText: 'HTTP 个人说明', status: 'ready' }); state.entries = [entry];
+  const preview = await call('/api/archive/preview', { snapshot: state, entryId: entry.id }); assert.equal(preview.status, 200);
+  assert.match(preview.data.text, new RegExp(`127.0.0.1:${port}`));
+  const committed = await call('/api/archive/commit', { token: preview.data.token }); assert.equal(committed.status, 200);
+  assert.equal((await call('/api/archive/commit', { token: preview.data.token })).status, 200);
+  assert.equal((await call('/api/search?q=' + encodeURIComponent('HTTP 个人说明'))).data.vault.length, 1);
+  const event = { id: 'http-event', kind: 'session', payload: { date: '2026-01-01', unit_id: 'u', subject_id: 'math', effective_minutes: '', output: 'HTTP 合成产物' } };
+  const ep = await call('/api/records/preview', event); assert.equal(ep.status, 200);
+  assert.equal((await call('/api/records')).data.length, 0);
+  assert.equal((await call('/api/records/commit', { token: ep.data.token })).status, 200);
+  assert.equal((await call('/api/records/commit', { token: ep.data.token })).data.unchanged, true);
+  assert.equal((await call('/api/records')).data.length, 1);
+  const media = await fetch(url + '/api/media-hash', { method: 'POST', headers: { 'X-Study-Desk': '1' }, body: Buffer.from('synthetic media bytes') });
+  assert.equal((await media.json()).sha256, sha('synthetic media bytes'));
+});
