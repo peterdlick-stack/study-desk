@@ -10,5 +10,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npm test
+      - name: Test with canonical Windows temporary directory
+        shell: pwsh
+        run: |
+          # Runner temp paths may use Windows short names or redirected ancestors.
+          # Keep application path protections intact; normalize only the test root.
+          $testTemp = node -p "require('node:fs').realpathSync(require('node:os').tmpdir())"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $env:TEMP = $testTemp
+          $env:TMP = $testTemp
+          npm test
       - run: npm run check:public
